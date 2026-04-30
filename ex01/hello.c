@@ -1,6 +1,9 @@
 #include<stdio.h>
 int main()
 {
-    printf("Hello,World!\n");
-    return 0;
+   char name[50];
+   printf("Please enter your name:");
+scanf("%s",name);
+printf("Hello,%s!\n",name);
+return 0;
 }
