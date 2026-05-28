@@ -25,7 +25,7 @@ void loop() {
   }
 
   // 逐渐变暗
-  for(int dutyCycle = 255; dutyCycle >= 0; dutyCycle--){
+  for(int dutyCycle = 0; dutyCycle <= 225; dutyCycle++){
     ledcWrite(ledPin, dutyCycle);   
     ledcWrite(ledPin_R, 255-dutyCycle);   
     delay(10);
