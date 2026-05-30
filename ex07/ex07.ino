@@ -6,7 +6,10 @@ const char* password = "20060915zjm";
 const int LED_PIN = 2;
 
 WebServer server(80);
-int brightness = 0;
+int targetBrightness = 0;   // 目标亮度（来自网页滑块）
+int currentBrightness = 0;  // 当前实际亮度（平滑变化中）
+unsigned long lastUpdate = 0;
+const long updateInterval = 20; // 每20ms更新一次亮度，足够平滑
 
 String makePage() {
   String html = R"rawliteral(
@@ -43,21 +46,22 @@ void handleRoot() {
 }
 
 void handleSet() {
-  brightness = server.arg("b").toInt();
-  brightness = constrain(brightness, 0, 255);
+  targetBrightness = server.arg("b").toInt();
+  targetBrightness = constrain(targetBrightness, 0, 255);
   server.send(200, "text/plain", "OK");
 }
 
 void setup() {
   Serial.begin(9600);
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  // 初始关灯
+  analogWrite(LED_PIN, 0);
 
   WiFi.begin(ssid, password);
   Serial.print("连接WiFi");
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
     Serial.print(".");
+    delay(300);
   }
   Serial.println("\n连接成功");
   Serial.print("访问地址: http://");
@@ -71,11 +75,22 @@ void setup() {
 void loop() {
   server.handleClient();
 
-  // 模拟 PWM 调光（不用 ledc）
-  if (brightness > 0) {
-    digitalWrite(LED_PIN, HIGH);
-    delayMicroseconds(brightness * 10);
+  unsigned long now = millis();
+  if (now - lastUpdate >= updateInterval) {
+    lastUpdate = now;
+
+    // 用sin函数做平滑过渡，让亮度变化没有顿挫感
+    float diff = targetBrightness - currentBrightness;
+    if (abs(diff) > 0) {
+      // 用sin的0~π区间做缓变，速度柔和，不会突然跳变
+      float t = 1.0 - abs(diff) / 255.0; // 距离目标越近，变化越慢
+      float smoothFactor = sin(t * PI / 2); // sin(0~π/2)是0→1的缓升曲线
+      int step = diff * smoothFactor * 0.1; // 步长系数，0.1控制平滑度
+      currentBrightness += step;
+      currentBrightness = constrain(currentBrightness, 0, 255);
+    }
+
+    // 输出PWM
+    analogWrite(LED_PIN, currentBrightness);
   }
-  digitalWrite(LED_PIN, LOW);
-  delayMicroseconds((255 - brightness) * 10);
 }

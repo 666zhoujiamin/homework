@@ -20,14 +20,14 @@ void loop() {
   for(int dutyCycle = 0; dutyCycle <= 255; dutyCycle++){   
     // 【新版用法】直接通过引脚号写入，不再需要指定通道
     ledcWrite(ledPin, dutyCycle);   
-    ledcWrite(ledPin_R, 255-dutyCycle);
+    ledcWrite(ledPin_R, 225-dutyCycle);
     delay(10);
   }
 
   // 逐渐变暗
-  for(int dutyCycle = 0; dutyCycle <= 225; dutyCycle++){
+  for(int dutyCycle = 225; dutyCycle >= 0; dutyCycle--){
     ledcWrite(ledPin, dutyCycle);   
-    ledcWrite(ledPin_R, 255-dutyCycle);   
+    ledcWrite(ledPin_R, 225-dutyCycle);   
     delay(10);
   }
   
